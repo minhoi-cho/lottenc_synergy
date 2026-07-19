@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYNERGY HALL — Flip! 시너지홀 &amp; 시너지 특공대</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================
+       ROUND 1 — 대회의실 → 시너지홀 (카드 뒤집기)
+       ========================================================= */
+    :root {
+      --blue: #2563EB;
+      --red: #EF4444;
+      --accent: #F97316;
+      --bg: #F8FAFC;
+      --text: #0F172A;
+      --muted: #64748B;
+      --card-bg: #ffffff;
+      --shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+    }
+
+    body.round1-active {
+      background: var(--bg) !important;
+      overflow: auto !important;
+      align-items: flex-start !important;
+      padding: 12px 10px 28px !important;
+    }
+
+    #round1-screen {
+      width: min(640px, 100%);
+      margin: 0 auto;
+    }
+
+    .cq-app {
+      position: relative;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    /* ----- 상단 ----- */
+    .cq-header {
+      padding: 18px 18px 12px;
+      text-align: center;
+      background: linear-gradient(180deg, #fff, #f1f5f9);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .cq-round-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--blue);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+
+    .cq-round-badge .sep {
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .cq-round-badge .total {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .cq-title {
+      font-size: clamp(1.55rem, 5vw, 2.05rem);
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 12px;
+      line-height: 1.25;
+      word-break: keep-all;
+    }
+
+    .cq-title span { color: var(--red); }
+
+    .cq-timer {
+      font-size: clamp(2.35rem, 9vw, 3.1rem);
+      font-weight: 800;
+      color: var(--blue);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.2s ease, transform 0.15s ease;
+    }
+
+    .cq-timer.warn { color: var(--accent); }
+    .cq-timer.danger {
+      color: var(--red);
+      animation: timerPulse 0.5s ease infinite alternate;
+    }
+
+    @keyframes timerPulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.12); }
+    }
+
+    .cq-stats {
+      margin-top: 12px;
+      font-size: clamp(14px, 3.2vw, 17px);
+      font-weight: 700;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .cq-stats .syn { color: var(--red); }
+    .cq-stats .meet { color: var(--blue); }
+
+    .cq-bar-wrap {
+      margin-top: 10px;
+      height: 12px;
+      background: #dbeafe;
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .cq-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--red), var(--accent));
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+
+    .cq-goal-line {
+      font-size: clamp(13px, 2.8vw, 15px);
+      color: var(--muted);
+      margin-top: 8px;
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    /* ----- 토스트 ----- */
+    .cq-toast {
+      position: absolute;
+      left: 50%;
+      top: 12px;
+      transform: translateX(-50%) translateY(-120%);
+      z-index: 15;
+      max-width: 90%;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.88);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .cq-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .cq-toast.enemy {
+      background: rgba(37, 99, 235, 0.92);
+    }
+
+    .cq-toast.player {
+      background: rgba(239, 68, 68, 0.92);
+    }
+
+    /* ----- 보드 ----- */
+    .cq-board-wrap {
+      padding: 14px 14px 8px;
+    }
+
+    .cq-board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: clamp(6px, 1.5vw, 10px);
+      perspective: 1000px;
+    }
+
+    .cq-card {
+      aspect-ratio: 1;
+      border: none;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      perspective: 800px;
+      touch-action: manipulation;
+    }
+
+    .cq-card:disabled {
+      cursor: default;
+    }
+
+    .cq-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+    }
+
+    .cq-card.synergy .cq-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .cq-card:active:not(:disabled) .cq-card-inner {
+      filter: brightness(0.95);
+      transform: scale(0.96) rotateY(var(--ry, 0deg));
+    }
+
+    .cq-card.synergy:active:not(:disabled) .cq-card-inner {
+      transform: scale(0.96) rotateY(180deg);
+    }
+
+    .cq-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: "Noto Sans KR", sans-serif;
+      font-weight: 800;
+      font-size: clamp(11px, 2.8vw, 14px);
+      line-height: 1.2;
+      padding: 4px;
+      color: #fff;
+      word-break: keep-all;
+    }
+
+    .cq-face.front {
+      background: linear-gradient(145deg, #3b82f6, var(--blue));
+    }
+
+    .cq-face.back {
+      background: linear-gradient(145deg, #f87171, var(--red));
+      transform: rotateY(180deg);
+    }
+
+    /* 플레이어 플립 빛 */
+    .cq-card.player-glow .cq-card-inner {
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.55), 0 0 18px rgba(249, 115, 22, 0.45);
+    }
+
+    /* 컴퓨터 플립 테두리 */
+    .cq-card.enemy-glow .cq-card-inner {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.7), 0 0 14px rgba(37, 99, 235, 0.4);
+    }
+
+    /* ----- 하단 ----- */
+    .cq-footer {
+      padding: 8px 14px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cq-hint {
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 700;
+      flex: 1;
+      min-width: 140px;
+      word-break: keep-all;
+    }
+
+    .cq-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .cq-btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 999px;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .cq-btn:hover { transform: translateY(-1px); }
+    .cq-btn:active { transform: translateY(0); }
+
+    .cq-btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--red), var(--accent));
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+
+    .cq-btn-ghost {
+      color: var(--blue);
+      background: #eff6ff;
+    }
+
+    .cq-btn-mute.is-off {
+      opacity: 0.55;
+      text-decoration: line-through;
+    }
+
+    /* ----- 오버레이 ----- */
+    .cq-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(248, 250, 252, 0.92);
+      backdrop-filter: blur(8px);
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .cq-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .cq-modal {
+      width: min(400px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      padding: 26px 22px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      animation: cqModalIn 0.35s ease;
+    }
+
+    @keyframes cqModalIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .cq-modal h2 {
+      font-size: clamp(1.45rem, 4.5vw, 1.85rem);
+      font-weight: 800;
+      margin-bottom: 14px;
+      color: var(--text);
+      line-height: 1.3;
+      word-break: keep-all;
+    }
+
+    .cq-modal p {
+      font-size: clamp(1rem, 3vw, 1.12rem);
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 10px;
+      word-break: keep-all;
+    }
+
+    .cq-diff {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 14px 0 18px;
+    }
+
+    .cq-diff-btn {
+      appearance: none;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 9px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .cq-diff-btn.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    .cq-modal .txt-blue {
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .cq-modal .txt-red {
+      color: var(--red);
+      font-weight: 800;
+    }
+
+    .cq-win-remember {
+      font-size: clamp(1rem, 3vw, 1.12rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.55;
+      margin: 10px 0 16px;
+      word-break: keep-all;
+    }
+
+    .cq-win-brand {
+      font-size: clamp(1.85rem, 7vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--red);
+      margin: 14px 0;
+      text-shadow: 0 2px 12px rgba(239, 68, 68, 0.25);
+    }
+
+    .cq-modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    #cq-confetti {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    @media (max-width: 420px) {
+      .cq-face { font-size: 10px; border-radius: 8px; }
+      .cq-card-inner { border-radius: 8px; }
+      .cq-board { gap: 5px; }
+    }
+  </style>
+</head>
+<body class="round1-active">
+
+  <!-- ===================== ROUND 1 ===================== -->
+  <div id="round1-screen">
+    <div class="cq-app" id="cq-app">
+      <canvas id="cq-confetti"></canvas>
+      <div class="cq-toast" id="cq-toast"></div>
+
+      <header class="cq-header">
+        <div class="cq-round-badge">ROUND 1 <span class="sep">/</span> <span class="total">2</span></div>
+        <h1 class="cq-title">Flip! <span>시너지홀</span></h1>
+        <div class="cq-timer" id="cq-timer">40</div>
+        <div class="cq-stats" id="cq-stats">
+          시너지홀 <span class="syn">0</span> · 4층 대회의실 <span class="meet">25</span> ·
+          남은 시간 <span id="cq-time-text">40</span>초
+        </div>
+        <div class="cq-bar-wrap"><div class="cq-bar" id="cq-bar"></div></div>
+        <div class="cq-goal-line">목표: 모든 카드를 시너지홀(새 이름)로 바꾸기!</div>
+      </header>
+
+      <div class="cq-board-wrap">
+        <div class="cq-board" id="cq-board" aria-label="대회의실을 시너지홀로 바꾸는 보드"></div>
+      </div>
+
+      <footer class="cq-footer">
+        <p class="cq-hint"><span style="color:var(--blue);font-weight:800;">파란 카드(4층 대회의실)</span>을 클릭하여 <span style="color:var(--red);font-weight:800;">빨간 카드(시너지홀)</span>로 바꿔주세요.</p>
+        <div class="cq-actions">
+          <button type="button" class="cq-btn cq-btn-ghost" id="cq-btn-mute">🔊 효과음</button>
+          <button type="button" class="cq-btn cq-btn-ghost" id="cq-btn-pause">⏸ 일시정지</button>
+          <button type="button" class="cq-btn cq-btn-ghost" id="cq-btn-restart">다시 시작</button>
+        </div>
+      </footer>
+
+      <!-- 시작 모달 -->
+      <div class="cq-overlay" id="cq-overlay-start">
+        <div class="cq-modal">
+          <div class="cq-round-badge">ROUND 1 <span class="sep">/</span> <span class="total">2</span></div>
+          <h2>Flip! 시너지홀</h2>
+          <p><span class="txt-blue">파란 카드(4층 대회의실)</span>을 클릭하여<br>
+            <span class="txt-red">빨간 카드(시너지홀)</span>로 바꿔주세요.</p>
+          <p>대회의실은 다시 원래 이름으로 되돌리려고 합니다.</p>
+          <p><strong>시간 안에 모든 카드를 시너지홀로 바꾸면 성공!</strong></p>
+          <div class="cq-diff" role="group" aria-label="난이도">
+            <button type="button" class="cq-diff-btn" data-diff="easy">쉬움</button>
+            <button type="button" class="cq-diff-btn active" data-diff="normal">보통</button>
+            <button type="button" class="cq-diff-btn" data-diff="hard">어려움</button>
+          </div>
+          <button type="button" class="cq-btn cq-btn-primary" id="cq-btn-start">작전 시작</button>
+        </div>
+      </div>
+
+      <!-- 일시정지 -->
+      <div class="cq-overlay hidden" id="cq-overlay-pause">
+        <div class="cq-modal">
+          <h2>일시정지</h2>
+          <p>준비가 되면 계속하세요.</p>
+          <div class="cq-modal-actions">
+            <button type="button" class="cq-btn cq-btn-primary" id="cq-btn-resume">계속하기</button>
+            <button type="button" class="cq-btn cq-btn-ghost" id="cq-btn-pause-restart">다시 시작</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 승리 -->
+      <div class="cq-overlay hidden" id="cq-overlay-win">
+        <div class="cq-modal">
+          <div class="cq-round-badge">ROUND 1 <span class="sep">/</span> <span class="total">2</span> 클리어</div>
+          <h2>1라운드 클리어!</h2>
+          <p>다음 라운드: <strong>시너지 특공대</strong></p>
+          <div class="cq-win-brand">SYNERGY HALL</div>
+          <p class="cq-win-remember">대회의실의 새로운 이름,<br>시너지홀을 기억해주세요!</p>
+          <div class="cq-modal-actions">
+            <button type="button" class="cq-btn cq-btn-primary" id="cq-to-round2">ROUND 2 시작 →</button>
+            <button type="button" class="cq-btn cq-btn-ghost" id="cq-win-again">다시 하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 실패 -->
+      <div class="cq-overlay hidden" id="cq-overlay-lose">
+        <div class="cq-modal">
+          <h2>아직 대회의실 카드가 남아있어요</h2>
+          <p>조금 더 빠르게 시너지홀로 바꿔주세요!</p>
+          <div class="cq-modal-actions">
+            <button type="button" class="cq-btn cq-btn-primary" id="cq-lose-again">다시 도전</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ROUND 2 ===================== -->
+  <div id="round2-screen">
+    <div id="game-wrapper">
+      <div id="hud">
+        <div class="hud-controls">← → 방향키 이동 · SPACE 발사</div>
+        <div class="hud-row">
+          <div class="hud-item">
+            <span class="hud-label">SCORE</span>
+            <span id="score-value">0</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">TIME</span>
+            <span id="wave-value">0s</span>
+          </div>
+          <div class="hud-item hud-gauge">
+            <span class="hud-label">💡 시너지</span>
+            <div class="gauge-track">
+              <div id="synergy-fill" class="gauge-fill"></div>
+            </div>
+            <span id="synergy-pct" class="gauge-pct">0%</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">HP</span>
+            <span id="hp-value">❤❤❤</span>
+          </div>
+        </div>
+        <div id="boss-hp-panel" class="boss-hp-panel hidden" aria-live="polite">
+          <div class="boss-hp-label">보스 HP <span id="boss-hp-text">0 / 0</span></div>
+          <div class="boss-hp-track">
+            <div id="boss-hp-fill" class="boss-hp-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <canvas id="game-canvas" width="480" height="640"></canvas>
+
+      <div id="overlay-start" class="overlay">
+        <div class="overlay-content">
+          <p class="round-badge">ROUND 2 <span>/</span> 2</p>
+          <p class="brand">SYNERGY HALL</p>
+          <h1 class="title">시너지 특공대</h1>
+          <p class="subtitle">시너지를 모아 괴물을 물리치세요.<br>시너지가 오를수록 공격이 강해집니다.</p>
+          <div class="controls-hint">
+            <span>← → 방향키로 이동</span>
+            <span>SPACE 스페이스바로 발사</span>
+            <span>시너지 MAX → 필살기</span>
+          </div>
+          <p class="controls-remind">조작: <strong>방향키</strong> 이동 · <strong>스페이스바</strong> 공격</p>
+          <button id="btn-start" class="btn-primary">출동!</button>
+        </div>
+      </div>
+
+      <div id="overlay-message" class="overlay hidden">
+        <div class="overlay-content">
+          <p id="msg-title" class="title"></p>
+          <p id="msg-body" class="subtitle"></p>
+          <button id="btn-restart" class="btn-primary">다시 하기</button>
+        </div>
+      </div>
+
+      <div id="overlay-ending" class="overlay hidden">
+        <div class="overlay-content ending">
+          <p class="round-badge">ROUND 2 <span>/</span> 2 클리어</p>
+          <p class="stars">★★★★★</p>
+          <h1 class="title">MISSION COMPLETE</h1>
+          <p class="ending-msg">시너지 특공대, 임무 완료!<br>좋은 아이디어는 함께할 때 더 강해집니다.</p>
+          <p class="brand ending-brand">SYNERGY HALL</p>
+          <button id="btn-again" class="btn-primary">다시 플레이</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================
+     * ROUND 1 — 대회의실 → 시너지홀
+     * 실시간 카드 뒤집기 (플레이어 vs 컴퓨터)
+     * ============================================================
+     */
+    (() => {
+      "use strict";
+
+      const COLS = 5;
+      const ROWS = 5;
+      const TOTAL = COLS * ROWS; // 25
+      const TIME_LIMIT = 40; // 조금 더 여유
+      const PROTECT_MS = 900; // 플레이어 플립 보호 시간 (더 길게)
+      const COMPUTER_GRACE_MS = 4000; // 초반 컴퓨터 대기
+
+      // 난이도 — 간격 늘려서 조금 쉽게
+      const DIFFICULTY = {
+        easy:   { interval: 2000, label: "쉬움" },
+        normal: { interval: 1400, label: "보통" },
+        hard:   { interval: 1000, label: "어려움" },
+      };
+
+      const PLAYER_TOASTS = [
+        "시너지홀로 바뀌었습니다!",
+        "새 이름, 시너지홀!",
+        "4층 대회의실 → 시너지홀",
+        "이름이 바뀌고 있어요!",
+      ];
+
+      const ENEMY_TOASTS = [
+        "대회의실로 되돌아갔습니다.",
+        "이름이 다시 바뀌려 합니다!",
+        "빨리 시너지홀로 바꿔 주세요!",
+      ];
+
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => [...document.querySelectorAll(s)];
+
+      /** @type {{ isSynergy: boolean, protectedUntil: number, el: HTMLElement }[]} */
+      let cards = [];
+      let difficulty = "normal";
+      let timeLeft = TIME_LIMIT;
+      let playing = false;
+      let paused = false;
+      let soundOn = true;
+      let timerId = null;
+      let computerId = null;
+      let lastEnemyIndex = -1;
+      let audioCtx = null;
+      let warned5 = false;
+      let toastTimer = null;
+
+      const boardEl = $("#cq-board");
+      const timerEl = $("#cq-timer");
+      const toastEl = $("#cq-toast");
+      const barEl = $("#cq-bar");
+
+      // ---------- 오디오 ----------
+      function ensureAudio() {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      }
+
+      function tone(freq, dur, type = "sine", vol = 0.12) {
+        if (!soundOn || !audioCtx) return;
+        const t = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, t);
+        g.gain.setValueAtTime(vol, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t);
+        o.stop(t + dur);
+      }
+
+      function sfxPlayerFlip() {
+        tone(520, 0.08, "triangle", 0.11);
+        setTimeout(() => tone(720, 0.07, "triangle", 0.08), 40);
+      }
+
+      function sfxEnemyFlip() {
+        tone(280, 0.1, "sine", 0.1);
+      }
+
+      function sfxWarn() {
+        tone(880, 0.08, "square", 0.07);
+      }
+
+      function sfxWin() {
+        [523, 659, 784, 1046].forEach((f, i) => {
+          setTimeout(() => tone(f, 0.2, "triangle", 0.12), i * 100);
+        });
+      }
+
+      function sfxLose() {
+        tone(200, 0.3, "sawtooth", 0.09);
+        setTimeout(() => tone(140, 0.35, "sawtooth", 0.07), 140);
+      }
+
+      // ---------- 토스트 ----------
+      function showToast(msg, kind = "player") {
+        toastEl.textContent = msg;
+        toastEl.className = "cq-toast show " + kind;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toastEl.classList.remove("show");
+        }, 1400);
+      }
+
+      // ---------- 점수 / UI ----------
+      function countSynergy() {
+        return cards.filter((c) => c.isSynergy).length;
+      }
+
+      function updateHUD() {
+        const syn = countSynergy();
+        const meet = TOTAL - syn;
+        const rate = Math.round((syn / TOTAL) * 100);
+
+        $("#cq-stats").innerHTML =
+          `시너지홀 <span class="syn">${syn}</span> · 4층 대회의실 <span class="meet">${meet}</span> · ` +
+          `남은 시간 <span id="cq-time-text">${timeLeft}</span>초`;
+
+        barEl.style.width = rate + "%";
+        timerEl.textContent = String(timeLeft);
+        timerEl.classList.toggle("warn", timeLeft <= 10 && timeLeft > 5);
+        timerEl.classList.toggle("danger", timeLeft <= 5);
+      }
+
+      // ---------- 보드 ----------
+      function buildBoard() {
+        boardEl.innerHTML = "";
+        cards = [];
+
+        for (let i = 0; i < TOTAL; i++) {
+          // 약 35%는 시너지홀로 시작 (조금 쉽게)
+          const startSynergy = Math.random() < 0.35;
+
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "cq-card" + (startSynergy ? " synergy" : "");
+          btn.dataset.index = String(i);
+          btn.setAttribute("aria-label", startSynergy ? "시너지홀" : "4층 대회의실");
+
+          btn.innerHTML =
+            `<div class="cq-card-inner">` +
+            `<div class="cq-face front">4층 대회의실</div>` +
+            `<div class="cq-face back">시너지홀</div>` +
+            `</div>`;
+
+          // 클릭 / 터치
+          btn.addEventListener("click", () => onPlayerClick(i));
+
+          boardEl.appendChild(btn);
+
+          cards.push({
+            isSynergy: startSynergy,
+            protectedUntil: 0,
+            el: btn,
+          });
+        }
+
+        updateHUD();
+      }
+
+      /** 카드 상태 시각 반영 */
+      function applyCardVisual(i) {
+        const card = cards[i];
+        card.el.classList.toggle("synergy", card.isSynergy);
+        card.el.setAttribute("aria-label", card.isSynergy ? "시너지홀" : "4층 대회의실");
+      }
+
+      function flashGlow(i, type) {
+        const el = cards[i].el;
+        const cls = type === "player" ? "player-glow" : "enemy-glow";
+        el.classList.add(cls);
+        setTimeout(() => el.classList.remove(cls), 350);
+      }
+
+      // ---------- 플레이어 ----------
+      function onPlayerClick(i) {
+        if (!playing || paused) return;
+        const card = cards[i];
+        // 이미 시너지홀이면 무시
+        if (card.isSynergy) return;
+
+        ensureAudio();
+        card.isSynergy = true;
+        card.protectedUntil = performance.now() + PROTECT_MS;
+        applyCardVisual(i);
+        flashGlow(i, "player");
+        sfxPlayerFlip();
+        showToast(PLAYER_TOASTS[Math.floor(Math.random() * PLAYER_TOASTS.length)], "player");
+        updateHUD();
+
+        // 전부 시너지홀이면 즉시 승리
+        if (countSynergy() >= TOTAL) {
+          endGame();
+        }
+      }
+
+      // ---------- 컴퓨터 ----------
+      function computerTick() {
+        if (!playing || paused) return;
+
+        // 보호 중이 아닌 시너지홀 카드만 후보
+        const now = performance.now();
+        const candidates = [];
+        cards.forEach((c, i) => {
+          if (c.isSynergy && now >= c.protectedUntil) candidates.push(i);
+        });
+
+        if (candidates.length === 0) return;
+
+        // 직전과 다른 카드 우선 무작위 선택
+        let pool = candidates.filter((i) => i !== lastEnemyIndex);
+        if (pool.length === 0) pool = candidates;
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        lastEnemyIndex = pick;
+
+        cards[pick].isSynergy = false;
+        applyCardVisual(pick);
+        flashGlow(pick, "enemy");
+        sfxEnemyFlip();
+        showToast(ENEMY_TOASTS[Math.floor(Math.random() * ENEMY_TOASTS.length)], "enemy");
+        updateHUD();
+      }
+
+      function startComputer() {
+        stopComputer();
+        const interval = DIFFICULTY[difficulty].interval;
+        // 초반 3초 유예 후 시작
+        computerId = setTimeout(() => {
+          computerTick();
+          computerId = setInterval(computerTick, interval);
+        }, COMPUTER_GRACE_MS);
+      }
+
+      function stopComputer() {
+        if (computerId) {
+          clearTimeout(computerId);
+          clearInterval(computerId);
+          computerId = null;
+        }
+      }
+
+      // ---------- 타이머 ----------
+      function startTimer() {
+        stopTimer();
+        timeLeft = TIME_LIMIT;
+        warned5 = false;
+        updateHUD();
+        timerId = setInterval(() => {
+          if (paused) return;
+          timeLeft -= 1;
+          updateHUD();
+
+          if (timeLeft <= 5 && timeLeft > 0) {
+            sfxWarn();
+          }
+
+          if (timeLeft <= 0) {
+            timeLeft = 0;
+            updateHUD();
+            endGame();
+          }
+        }, 1000);
+      }
+
+      function stopTimer() {
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+        }
+      }
+
+      // ---------- 게임 흐름 ----------
+      function setCardsEnabled(enabled) {
+        cards.forEach((c) => {
+          c.el.disabled = !enabled;
+        });
+      }
+
+      function startGame() {
+        ensureAudio();
+        hideAllOverlays();
+        playing = true;
+        paused = false;
+        lastEnemyIndex = -1;
+        $("#cq-btn-pause").textContent = "⏸ 일시정지";
+        buildBoard();
+        setCardsEnabled(true);
+        startTimer();
+        startComputer();
+      }
+
+      function pauseGame() {
+        if (!playing || paused) return;
+        paused = true;
+        $("#cq-overlay-pause").classList.remove("hidden");
+        $("#cq-btn-pause").textContent = "▶ 계속";
+      }
+
+      function resumeGame() {
+        if (!playing || !paused) return;
+        paused = false;
+        $("#cq-overlay-pause").classList.add("hidden");
+        $("#cq-btn-pause").textContent = "⏸ 일시정지";
+      }
+
+      function endGame() {
+        playing = false;
+        paused = false;
+        stopTimer();
+        stopComputer();
+        setCardsEnabled(false);
+
+        const syn = countSynergy();
+        const rate = Math.round((syn / TOTAL) * 100);
+
+        // 전부 뒤집으면 승리
+        if (syn >= TOTAL) {
+          onWin(rate);
+        } else {
+          onLose(rate);
+        }
+      }
+
+      function onWin(rate) {
+        sfxWin();
+        // 모든 카드를 순서대로 시너지홀로
+        cascadeToSynergy(() => {
+          $("#cq-overlay-win").classList.remove("hidden");
+          launchConfetti();
+        });
+      }
+
+      function onLose(rate) {
+        sfxLose();
+        $("#cq-overlay-lose").classList.remove("hidden");
+      }
+
+      /** 승리 연출: 카드를 순서대로 시너지홀로 */
+      function cascadeToSynergy(done) {
+        let i = 0;
+        const step = () => {
+          if (i >= TOTAL) {
+            done();
+            return;
+          }
+          cards[i].isSynergy = true;
+          applyCardVisual(i);
+          flashGlow(i, "player");
+          i += 1;
+          updateHUD();
+          setTimeout(step, 28);
+        };
+        step();
+      }
+
+      function hideAllOverlays() {
+        ["cq-overlay-start", "cq-overlay-pause", "cq-overlay-win", "cq-overlay-lose"].forEach((id) => {
+          $("#" + id).classList.add("hidden");
+        });
+      }
+
+      function showStart() {
+        stopTimer();
+        stopComputer();
+        playing = false;
+        paused = false;
+        hideAllOverlays();
+        $("#cq-overlay-start").classList.remove("hidden");
+        buildBoard();
+        setCardsEnabled(false);
+        timeLeft = TIME_LIMIT;
+        updateHUD();
+      }
+
+      function goRound2() {
+        document.body.classList.remove("round1-active");
+        document.body.classList.add("round2-active");
+        window.scrollTo(0, 0);
+      }
+
+      // ---------- Confetti ----------
+      const canvas = $("#cq-confetti");
+      const ctx = canvas.getContext("2d");
+      let parts = [];
+      let raf = null;
+
+      function resizeConfetti() {
+        const app = $("#cq-app");
+        canvas.width = app.clientWidth;
+        canvas.height = app.clientHeight;
+      }
+
+      function launchConfetti() {
+        resizeConfetti();
+        const colors = ["#EF4444", "#F97316", "#2563EB", "#FBBF24", "#fff"];
+        parts = [];
+        for (let i = 0; i < 120; i++) {
+          parts.push({
+            x: Math.random() * canvas.width,
+            y: -Math.random() * 60,
+            w: 5 + Math.random() * 6,
+            h: 7 + Math.random() * 8,
+            vx: -2 + Math.random() * 4,
+            vy: 2 + Math.random() * 3.5,
+            rot: Math.random() * Math.PI,
+            vr: -0.2 + Math.random() * 0.4,
+            color: colors[i % colors.length],
+          });
+        }
+        if (!raf) loopConfetti();
+        setTimeout(() => { parts = []; }, 4000);
+      }
+
+      function loopConfetti() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        parts.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.05;
+          p.rot += p.vr;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        parts = parts.filter((p) => p.y < canvas.height + 40);
+        if (parts.length) {
+          raf = requestAnimationFrame(loopConfetti);
+        } else {
+          raf = null;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      // ---------- 이벤트 바인딩 ----------
+      function bindUI() {
+        $$(".cq-diff-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            $$(".cq-diff-btn").forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            difficulty = btn.dataset.diff;
+          });
+        });
+
+        $("#cq-btn-start").addEventListener("click", startGame);
+        $("#cq-btn-restart").addEventListener("click", showStart);
+        $("#cq-btn-pause-restart").addEventListener("click", showStart);
+        $("#cq-win-again").addEventListener("click", showStart);
+        $("#cq-lose-again").addEventListener("click", showStart);
+
+        $("#cq-btn-pause").addEventListener("click", () => {
+          if (!playing) return;
+          if (paused) resumeGame();
+          else pauseGame();
+        });
+        $("#cq-btn-resume").addEventListener("click", resumeGame);
+
+        $("#cq-btn-mute").addEventListener("click", () => {
+          soundOn = !soundOn;
+          const btn = $("#cq-btn-mute");
+          btn.textContent = soundOn ? "🔊 효과음" : "🔇 효과음";
+          btn.classList.toggle("is-off", !soundOn);
+          if (soundOn) ensureAudio();
+        });
+
+        $("#cq-to-round2").addEventListener("click", goRound2);
+        window.addEventListener("resize", resizeConfetti);
+      }
+
+      // 부트
+      buildBoard();
+      setCardsEnabled(false);
+      updateHUD();
+      bindUI();
+      resizeConfetti();
+    })();
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
